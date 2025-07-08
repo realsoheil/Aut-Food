@@ -1,10 +1,8 @@
-package com.autfood.server.http.handlers;
+package com.autfood.server.util;
 
-import com.autfood.server.util.JsonUtil;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.*;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class HealthHandler implements HttpHandler {
     @Override
