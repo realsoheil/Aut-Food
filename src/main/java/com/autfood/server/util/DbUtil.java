@@ -24,50 +24,48 @@ public final class DbUtil {
 
     /** ساخت جدول‌های اولیه در اولین اجرا */
     public static void initSchema() throws SQLException {
-        String sql = """
+        String sql1 = """
             CREATE TABLE IF NOT EXISTS users (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            username TEXT
-                UNIQUE NOT NULL,
-                            email TEXT UNIQUE NO
-                       password_hash TEXT NOT
-                NULL,
-                            salt TEXT NOT NULL,
-            role TEXT NOT NULL
-            
-            """;
-        try (Statement st = getConnection().createStatement()) {
-            st.execute(sql);
-        }
-        String sql2 = """
- CREATE TABLE IF NOT EXISTS restaurants(
-   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-   owner_id    INTEGER NOT NULL,
-   name        TEXT    NOT NULL,
-   status      TEXT    NOT NULL,
-   description TEXT,
-   FOREIGN KEY(owner_id) REFERENCES users(id)
- );
-""";
-        try (Statement st = getConnection().createStatement()) {
-            st.execute(sql);
-            st.execute(sql2);
-        }
-        String sql3 = """
-CREATE TABLE IF NOT EXISTS food_items(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  restaurant_id INTEGER NOT NULL,
-  name TEXT NOT NULL,
-  price REAL NOT NULL,
-  discount REAL DEFAULT 0,
-  status TEXT NOT NULL,
-  image_path TEXT,
-  FOREIGN KEY(restaurant_id) REFERENCES restaurants(id)
-);
-""";
-        st.execute(sql3);
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                salt TEXT NOT NULL,
+                role TEXT NOT NULL
+            );
+        """;
 
+        String sql2 = """
+            CREATE TABLE IF NOT EXISTS restaurants (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                owner_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                status TEXT NOT NULL,
+                description TEXT,
+                FOREIGN KEY(owner_id) REFERENCES users(id)
+            );
+        """;
+
+        String sql3 = """
+            CREATE TABLE IF NOT EXISTS food_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                restaurant_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                price REAL NOT NULL,
+                discount REAL DEFAULT 0,
+                status TEXT NOT NULL,
+                image_path TEXT,
+                FOREIGN KEY(restaurant_id) REFERENCES restaurants(id)
+            );
+        """;
+
+        try (Statement st = getConnection().createStatement()) {
+            st.execute(sql1);
+            st.execute(sql2);
+            st.execute(sql3);
+        }
     }
 
-    private DbUtil() { }
+    private DbUtil() {}
 }
+

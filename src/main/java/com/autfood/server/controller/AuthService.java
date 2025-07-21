@@ -6,6 +6,8 @@ import com.autfood.server.model.User;
 import com.autfood.server.util.HashUtil;
 import com.autfood.server.util.SessionStore;
 
+import java.sql.SQLException;
+
 public class AuthService {
     private final UserDao dao = new UserDao();
 
@@ -16,7 +18,7 @@ public class AuthService {
         String salt = HashUtil.randomSalt();
         String hash = HashUtil.sha256(password+salt);
 
-        User u = new User(null,username,email,hash,salt, Role.USER);
+        User u = new User(null,username,email,hash,salt, Role.BUYER);
         return dao.save(u);
     }
 
@@ -31,9 +33,11 @@ public class AuthService {
     public Integer validate(String token){
         return SessionStore.getUserId(token); // می‌تواند null برگردد
     }
+
+    public Role getUserRole(int userId) throws SQLException {
+        User u = dao.findById(userId);
+        return u != null ? u.getRole() : null;
+    }
 }
-public Role getUserRole(int userId) throws SQLException {
-    User u = dao.findById(userId);
-    return u != null ? u.getRole() : null;
-}
+
 

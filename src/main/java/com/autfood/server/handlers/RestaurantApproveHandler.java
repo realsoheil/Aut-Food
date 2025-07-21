@@ -1,40 +1,72 @@
 package com.autfood.server.handlers;
 
-import com.autfood.server.controller.*;
+import com.autfood.server.controller.AuthService;
+import com.autfood.server.controller.RestaurantService;
 import com.autfood.server.model.Role;
 import com.autfood.server.util.TokenUtil;
-import com.sun.net.httpserver.*;
+import com.google.gson.JsonObject;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 
-/** PUT /api/admin/restaurants/{id}/approve  (فقط ADMIN) */
 public class RestaurantApproveHandler implements HttpHandler {
-
     private final AuthService auth = new AuthService();
     private final RestaurantService svc = new RestaurantService();
 
     @Override
     public void handle(HttpExchange ex) throws IOException {
-        if (!"PUT".equals(ex.getRequestMethod())) { ex.sendResponseHeaders(405, -1); return; }
+        if (!"PUT".equalsIgnoreCase(ex.getRequestMethod())) {
+            respondError(ex, 405, "method not allowed");
+            return;
+        }
 
-        // احراز هویت
+        // استخراج توکن و بررسی نقش
         Integer adminId = TokenUtil.extractUserId(ex.getRequestHeaders().getFirst("Authorization"), auth);
-        if (adminId == null) { ex.sendResponseHeaders(401, -1); return; }
+        if (adminId == null) {
+            respondError(ex, 401, "unauthorized");
+            return;
+        }
 
-        // نقش باید ADMIN باشد
-        if (auth.getUserRole(adminId) != Role.ADMIN) { ex.sendResponseHeaders(403, -1); return; }
-
-        // استخراج id رستوران
-        String path = ex.getRequestURI().getPath();      // /api/admin/restaurants/5/approve
-        String idStr = path.split("/")[4];               // بخش پنجم
         try {
-            int id = Integer.parseInt(idStr);
+            if (auth.getUserRole(adminId) != Role.ADMIN) {
+                respondError(ex, 403, "forbidden");
+                return;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        // استخراج id از URI
+        String[] parts = ex.getRequestURI().getPath().split("/");
+        if (parts.length != 6 || !"approve".equals(parts[5])) {
+            respondError(ex, 400, "invalid path");
+            return;
+        }
+
+        try {
+            int id = Integer.parseInt(parts[4]);
             svc.approve(id);
-            ex.sendResponseHeaders(204, -1);             // No Content
+            ex.sendResponseHeaders(204, -1); // No Content
         } catch (NumberFormatException e) {
-            ex.sendResponseHeaders(400, -1);
+            respondError(ex, 400, "invalid id");
         } catch (Exception e) {
-            ex.sendResponseHeaders(500, -1);
-        } finally { ex.close(); }
+            respondError(ex, 500, "internal server error");
+        } finally {
+            ex.close();
+        }
+    }
+
+    private void respondError(HttpExchange ex, int code, String msg) throws IOException {
+        JsonObject j = new JsonObject();
+        j.addProperty("error", msg);
+        byte[] r = j.toString().getBytes(StandardCharsets.UTF_8);
+        ex.getResponseHeaders().set("Content-Type", "application/json");
+        ex.sendResponseHeaders(code, r.length);
+        ex.getResponseBody().write(r);
+        ex.getResponseBody().close();
     }
 }
+

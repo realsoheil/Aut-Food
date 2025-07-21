@@ -1,4 +1,4 @@
-package com.autfood.server.http.handlers;
+package com.autfood.server.handlers;
 
 import com.autfood.server.controller.FoodItemService;
 import com.autfood.server.util.JsonUtil;

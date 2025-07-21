@@ -21,5 +21,9 @@ public final class HashUtil {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
-    private HashUtil(){}
+    private HashUtil(){}public static String hashPassword(String password, String salt) {
+        return sha256(password + salt);
+    }
+
+
 }
